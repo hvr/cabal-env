@@ -9,9 +9,23 @@ Usage: $0 [-n <env-name>] (-r | -l | [DEP]+)"
 Creates GHC package environment named '<env-name>' (default = 'default')
 containing the specified deps.
 
-  -r deletes the specified environment
+Flags:
 
-  -l lists available environments for current 'ghc'
+  -n <env-name>   set environment name to operate on
+                  (default: 'default')
+
+  -r              deletes the specified environment
+
+  -l              lists available environments for current 'ghc'
+
+
+GHC Package environments are supported since GHC 8.0.2 and Cabal 2.2;
+By default, the environment named 'default' is loaded by GHC and GHCi
+if it exists.
+
+You can select a specific package environment for GHC(i) via e.g.
+'ghci -package-env myenv' or by setting an environment variable
+'GHC_ENVIRONMENT=myenv ghci'
 
 Examples:
 
