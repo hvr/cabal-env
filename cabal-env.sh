@@ -11,7 +11,9 @@ containing the specified deps.
 
 Flags:
 
-  -n <env-name>   set environment name to operate on
+  -n <env-name>   set environment name to operate on;
+                  use the special env-name '.' to create a
+                  local '.ghc.environment' file in the current folder.
                   (default: 'default')
 
   -r              deletes the specified environment
@@ -79,11 +81,20 @@ if $list; then
 
     get_ghc_triplet
 
+    echo ""
+
+    # TODO: walk up folder hierarchy Git-style
+    if [ -e ".ghc.environment.${TRIPLET}" ]; then
+        echo "Local environment detected in '$(pwd)':"
+        echo "- .ghc.environment.${TRIPLET}"
+        echo ""
+    fi
+
     if [ -d "$ENVSDIR" ]; then
-        echo "Environments available in $ENVSDIR:"
-        echo
+        echo "Environments available in '$ENVSDIR':"
         cd "$ENVSDIR"
         find . -type f | sed 's,^[.][/],- ,'
+        echo ""
     else
         echo "Environment folder $ENVSDIR does not exist"
     fi
@@ -98,7 +109,11 @@ if $remove; then
 
     get_ghc_triplet
 
-    envfn="${ENVSDIR}${envname}"
+    if [ "${envname}" = "." ]; then
+        envfn=".ghc.environment.${TRIPLET}"
+    else
+        envfn="${ENVSDIR}${envname}"
+    fi
 
     if [ -f "$envfn" ]; then
         echo "removing '$envfn'"
@@ -117,6 +132,8 @@ fi
 echo "Using environment-name = '$envname'"
 
 TMPDIR=$(mktemp -d)
+
+PWD0=$(pwd)
 
 pushd "$TMPDIR"
 
@@ -154,20 +171,31 @@ echo "Found '$ENVFN'"
 
 TRIPLET=${ENVFN#.ghc.environment.}
 
-echo "$TRIPLET"
+if [ "${envname}" = "." ]; then
+    cat "$ENVFN" | grep -v '^package-db dist-newstyle/' | grep -v '^package-id z-0-inplace' > "$PWD0/$ENVFN"
+    popd
 
-ENVSDIR="${HOME}/.ghc/${TRIPLET}/environments/"
+    rm -rf "$TMPDIR"
 
-mkdir -v -p "${ENVSDIR}"
+    echo ""
+    echo "Succesfully created local '$PWD0/$ENVFN' pkg environment!"
+else
+    #echo "$TRIPLET"
 
-ENVSDIRFN="${ENVSDIR}${envname}"
+    ENVSDIR="${HOME}/.ghc/${TRIPLET}/environments/"
 
-cat "$ENVFN" | grep -v '^package-db dist-newstyle/' | grep -v '^package-id z-0-inplace' > "$ENVSDIRFN"
+    mkdir -v -p "${ENVSDIR}"
 
-popd
+    ENVSDIRFN="${ENVSDIR}${envname}"
 
-rm -rf "$TMPDIR"
+    cat "$ENVFN" | grep -v '^package-db dist-newstyle/' | grep -v '^package-id z-0-inplace' > "$ENVSDIRFN"
 
-echo "Succesfully created '$ENVSDIRFN' pkg environment;"
-echo "use 'ghci -package-env $envname' or 'GHC_ENVIRONMENT=$envname ghci' to select."
-echo "(The 'default' package env is used by default. Try ':show packages' inside GHCi.)"
+    popd
+
+    rm -rf "$TMPDIR"
+
+    echo ""
+    echo "Succesfully created '$ENVSDIRFN' pkg environment;"
+    echo "use 'ghci -package-env $envname' or 'GHC_ENVIRONMENT=$envname ghci' to select."
+    echo "(The 'default' package env is used by default. Try ':show packages' inside GHCi.)"
+fi
