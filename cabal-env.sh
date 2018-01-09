@@ -16,9 +16,13 @@ Flags:
                   local '.ghc.environment' file in the current folder.
                   (default: 'default')
 
-  -r              deletes the specified environment
+  -r              deletes the specified environment (via -n)
 
   -l              lists available environments for current 'ghc'
+                  (cannot be combined with other flags)
+
+  -i              create temporary environment and invoke GHCi with it
+                  (cannot be combined with other flags)
 
 
 GHC Package environments are supported since GHC 8.0.2 and Cabal 2.2;
@@ -53,10 +57,11 @@ get_ghc_triplet () {
 
 remove=false
 list=false
+run_ghci=false
 
 envname="default"
 
-while getopts lrn: flag; do
+while getopts lrin: flag; do
     case $flag in
         n) envname="$OPTARG"
            ;;
@@ -65,6 +70,9 @@ while getopts lrn: flag; do
            ;;
 
         l) list=true
+           ;;
+
+        i) run_ghci=true
            ;;
 
         ?) show_usage
@@ -170,6 +178,17 @@ fi
 echo "Found '$ENVFN'"
 
 TRIPLET=${ENVFN#.ghc.environment.}
+
+if $run_ghci; then
+    cat "$ENVFN" | grep -v '^package-db dist-newstyle/' | grep -v '^package-id z-0-inplace' > "ghci.env"
+    popd
+    ghci -package-env "$TMPDIR/ghci.env"
+    RC=$?
+
+    rm -rf "$TMPDIR"
+    echo "cabal-env: temporary environment destroyed again"
+    exit $RC
+fi
 
 if [ "${envname}" = "." ]; then
     cat "$ENVFN" | grep -v '^package-db dist-newstyle/' | grep -v '^package-id z-0-inplace' > "$PWD0/$ENVFN"
