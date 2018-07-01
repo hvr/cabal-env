@@ -164,6 +164,11 @@ EOF
 
 cat > cabal.project <<EOF
 packages: .
+
+documentation: False
+
+package *
+  documentation: False
 EOF
 
 cabal new-build all
