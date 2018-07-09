@@ -24,6 +24,7 @@ Flags:
   -i              create temporary environment and invoke GHCi with it
                   (cannot be combined with other flags)
 
+  -s <script>     run script (via 'runghc') in temporary environment
 
 GHC Package environments are supported since GHC 8.0.2 and Cabal 2.2;
 By default, the environment named 'default' is loaded by GHC and GHCi
@@ -38,6 +39,10 @@ Examples:
   $0 -n lens 'lens == 4.15.*' 'lens-aeson == 1.0.*' http-streams
 
   $0 unordered-containers QuickCheck quickcheck-instances
+
+  $0 -s webcrawler.hs wreq
+
+  $0 -i lens-aeson
 
 EOF
     exit 1
@@ -60,8 +65,9 @@ list=false
 run_ghci=false
 
 envname="default"
+hscript=""
 
-while getopts lrin: flag; do
+while getopts lrin:s: flag; do
     case $flag in
         n) envname="$OPTARG"
            ;;
@@ -73,6 +79,9 @@ while getopts lrin: flag; do
            ;;
 
         i) run_ghci=true
+           ;;
+
+        s) hscript="$OPTARG"
            ;;
 
         ?) show_usage
@@ -184,10 +193,23 @@ echo "Found '$ENVFN'"
 
 TRIPLET=${ENVFN#.ghc.environment.}
 
+if [ -n "$hscript" ]; then
+    cat "$ENVFN" | grep -v '^package-db dist-newstyle/' | grep -v '^package-id z-0-inplace' > "ghci.env"
+
+    popd
+    echo "Running script '$hscript'..."
+    runghc -package-env="$TMPDIR/ghci.env" "$hscript"
+    RC=$?
+
+    rm -rf "$TMPDIR"
+    echo "cabal-env: temporary environment destroyed again"
+    exit $RC
+fi
+
 if $run_ghci; then
     cat "$ENVFN" | grep -v '^package-db dist-newstyle/' | grep -v '^package-id z-0-inplace' > "ghci.env"
     popd
-    ghci -package-env "$TMPDIR/ghci.env"
+    ghci -package-env="$TMPDIR/ghci.env"
     RC=$?
 
     rm -rf "$TMPDIR"

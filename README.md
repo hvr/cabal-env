@@ -25,6 +25,7 @@ Flags:
   -i              create temporary environment and invoke GHCi with it
                   (cannot be combined with other flags)
 
+  -s <script>     run script (via 'runghc') in temporary environment
 
 GHC Package environments are supported since GHC 8.0.2 and Cabal 2.2;
 By default, the environment named 'default' is loaded by GHC and GHCi
@@ -39,6 +40,8 @@ Examples:
   ./cabal-env.sh -n lens 'lens == 4.15.*' 'lens-aeson == 1.0.*' http-streams
 
   ./cabal-env.sh unordered-containers QuickCheck quickcheck-instances
+
+  ./cabal-env.sh -s webcrawler.hs wreq
 
   ./cabal-env.sh -i lens-aeson
 ```
