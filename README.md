@@ -2,6 +2,8 @@
 
 `cabal-env` is a prototype UI for managing the new [package environments](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/packages.html#package-environments) facility implement in GHC for use by cabal's [nix-style local builds](https://cabal.readthedocs.io/en/latest/nix-local-build-overview.html) which allows to provide seamless access to the nix-style package store for direct invocations GHC and GHCi.
 
+__NOTE__: A newer different prototype (different implementation, but same name `cabal-env`) can be found at https://github.com/phadej/cabal-env
+
 ## Usage
 
 ```
